@@ -59,6 +59,8 @@ modalCart.addEventListener('click', (e) => {
 const more = document.querySelector('.more');
 const navigationLink = document.querySelectorAll('.navigation-link');
 const longGoodsList = document.querySelector('.long-goods-list');
+const showAcsessories = document.querySelectorAll('.show-acsessories');
+const showClothing = document.querySelectorAll('.show-clothing');
 
 const getGoods = async function () { // получаем данные с сервера
 	const result = await fetch('/db/db.json');
@@ -136,3 +138,18 @@ navigationLink.forEach(function (link) { // по клику на ссылке т
 		}
 	});
 });
+
+showAcsessories.forEach(function (item) {
+	item.addEventListener('click', function (event) {
+		event.preventDefault();
+		filterCards('category', 'Accessories')
+	})	
+})
+showClothing.forEach(function (item) {
+	item.addEventListener('click', function (event) {
+		event.preventDefault();
+		filterCards('category', 'Clothing')
+	})
+})
+
+
