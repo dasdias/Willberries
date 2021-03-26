@@ -249,5 +249,32 @@ showClothing.forEach(function (item) {
 		filterCards('category', 'Clothing')
 	})
 })
+ 
 
-
+const modalForm = document.querySelector('.modal-form');
+const postData = dataUser => fetch('server.php', {
+	method: 'POST',
+	body: dataUser,
+})
+modalForm.addEventListener('submit', (event) => {
+	event.preventDefault();
+	const formData = new FormData(modalForm);
+	formData.append('cart', JSON.stringify(cart.cartGoods));
+	postData(formData)
+	.then(response => {
+		if(!response.ok) {
+			throw new Error(response.status);
+		}
+		alert('Ваш заказ отправлен, с вами свяжутся в ближайшее время');
+		console.log(response.statusText);
+	})
+	.catch( err => {
+		alert('Ошибка отправки, повторите попытку позже')
+		console.error(err);
+	})
+	.finally(() => {
+		closeModal();
+		modalForm.reset();
+		cart.cartGoods.length = 0;
+	});
+})
