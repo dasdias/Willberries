@@ -23,17 +23,44 @@ const showClothing = document.querySelectorAll('.show-clothing');
 const cartTableGoods = document.querySelector('.cart-table__goods');
 const cardTableTotal = document.querySelector('.card-table__total');
 const cartCount = document.querySelector('.cart-count');
+const btnClear = document.querySelector('.btn-clear');
 
-const getGoods = async function () { // получаем данные с сервера
-	const result = await fetch('db/db.json');
-	if (!result.ok) {
-		throw 'Ошибочка вышла ' + result.status;		
-	}
-	return await result.json();
-};
+
+// первый способ
+// const getGoods = async function () { // получаем данные с сервера
+// 	const result = await fetch('db/db.json');
+// 	if (!result.ok) {
+// 		throw 'Ошибочка вышла ' + result.status;		
+// 	}
+// 	return await result.json();
+// };
+
+// Второй способ с проверкой, были ли ранее получены данные с сервера
+const checkGoods = () => {
+	const data = [];
+	return  async function () { // получаем данные с сервера
+		if(data.length) return data;
+
+		const result = await fetch('db/db.json');
+		if (!result.ok) {
+			throw 'Ошибочка вышла ' + result.status;		
+		}
+		data.push(...( await result.json()));
+		return data;
+	};
+}
+
+const getGoods = checkGoods();
+
 
 const cart = {
 	cartGoods: [],
+	clearCart() {
+		this.cartGoods.length = 0;
+		this.countQuantity();
+		this.renderCart();
+		closeModal();
+	},
 	renderCart(){ // выводи товары в DOM
 		cartTableGoods.textContent = '';
 		this.cartGoods.forEach(({id, name, price, count}) =>{
@@ -60,13 +87,13 @@ const cart = {
 	deleteGoog(id){ // удаляем товары из корзины
 		this.cartGoods = this.cartGoods.filter(item => id !== item.id);
 		this.renderCart();
-		this.totalCount();
+		this.countQuantity();
 	},
 	minusGood(id){ // уменьшаем кол-во товаров в корзине
 		for (const item of this.cartGoods) {
 			if(item.id === id) {
 				if (item.count <= 1) {
-					console.log('222');
+					// console.log('222');
 					this.deleteGoog(id);
 				} else {
 					item.count--;
@@ -75,6 +102,7 @@ const cart = {
 			}
 		}
 		this.renderCart();
+		this.countQuantity();
 	},
 	plusGood(id){ // увеличиваем кол-во товаров в корзине
 		for (const item of this.cartGoods) {
@@ -84,12 +112,13 @@ const cart = {
 			}
 		}
 		this.renderCart();
+		this.countQuantity();
 	},
 	addCartGoods(id){ // добавляем товары в корзину
 		const goodItem = this.cartGoods.find( item => item.id === id);
-		if (goodItem) {
+		if (goodItem) { // если товар уже есть в корзине, то увеличиваем его количество
 			this.plusGood(id);
-		} else {
+		} else { // если товара нет в корзине, делаем запрос к базе и добавляем новый товар 
 			getGoods()
 				.then(data => data.find( item => item.id === id))
 				.then(({id, price, name}) => {
@@ -99,21 +128,22 @@ const cart = {
 						price,
 						count: 1
 					});
+					this.countQuantity();
 				});
 		}
 	},
-	// totalCount() {
-	// 	if (this.cartGoods.length >= 0) {
-	// 		cartCount.textContent =  this.cartGoods.length + 1;
-	// 	}
-	// }
+	countQuantity() {
+		const countQuntity = this.cartGoods.reduce( (sum, item) => {
+			return sum + item.count;
+		}, 0)
+		cartCount.textContent = countQuntity ? countQuntity : "";		
+	}
 };
-
+btnClear.addEventListener('click', cart.clearCart.bind(cart)) // очищаем корзину вызвав метод clearCart и привязываем контекст вызова
 document.body.addEventListener('click', (event) => {
 	const addToCart = event.target.closest('.add-to-cart');
 	if (addToCart) {
 		cart.addCartGoods(addToCart.dataset.id);
-		// cart.totalCount();
 	}
 });
 
